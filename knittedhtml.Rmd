@@ -1,0 +1,68 @@
+---
+title: "Practical_Machine_Learning_Project_Coursera"
+author: "Miss Nassim Bordbar"
+date: "Sunday, August 24, 2014"
+output: html_document
+---
+
+
+#Method
+
+The code for the method I have used is shown here with comments.
+Set working directory
+```{r, echo=TRUE}
+setwd("C:/Users/nassim.bordbar/Documents/Coursera/ml")
+```
+Load caret package
+```{r echo=TRUE}
+library(caret)
+```
+Reading csv and replacing blank cells with NA
+```{r, echo=TRUE}
+training <- read.csv("pml-training.csv",na.strings = c("","NA"))
+head(training)
+validation <- read.csv("pml-testing.csv",na.strings = c("","NA"))
+head(validation)
+```
+Removing columns with NA / non-required columns
+```{r, echo=TRUE}
+training <- training[,colSums(is.na(training)) == 0]
+training <- training[,8:dim(training)[2]]
+validation <- validation[,colSums(is.na(validation)) == 0]
+validation <- validation[,8:dim(validation)[2]]
+```
+
+Creating training and testing dataset
+```{r, echo=TRUE}
+inTrain <- createDataPartition(y=training$classe,p=0.75, list = FALSE)
+testing <- training[-inTrain,]
+training <- training[inTrain,]
+```
+
+Application of random forests using caret package
+```{r, echo=TRUE}
+tcr <- trainControl("repeatedcv", number=2, repeats=2, classProbs=TRUE, savePred=T) 
+RFFit <- train(classe ~., data=training, method="rf", trControl=tcr)
+```
+
+Prediction for own testing dataset
+```{r, echo=TRUE}
+testing$Prediction <- predict(RFFit, newdata=testing)
+```
+ 
+Generation of confusion matrix indicates model is good fit
+
+```{r, echo=TRUE}
+cm <- confusionMatrix(data=testing$Prediction, testing$classe)
+```
+
+
+Prediction algorithm applied to predict testing results
+```{r, echo=TRUE}
+validation$Prediction <- predict(RFFit, newdata=validation)
+```
+
+Display results
+```{r, echo=TRUE}
+validation$Prediction
+```
